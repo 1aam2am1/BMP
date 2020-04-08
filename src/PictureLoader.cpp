@@ -276,7 +276,32 @@ sf::Texture PictureLoader::ReadRgb16(std::shared_ptr<const BMP> bmp) {
 }
 
 sf::Texture PictureLoader::ReadRgbPalette(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
+    sf::Image image;
+    sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
+    image.create(size.x, size.y);
+
+    auto pixel = PictureLoader::getUncompressedPixel32(bmp);
+
+    for (uint32_t y = 0; y < size.y; ++y) {
+        for (uint32_t x = 0; x < size.x; ++x) {
+            auto index = pixel[x + y * size.x];
+
+            sf::Color c;
+
+            c = bmp->palette[index];
+
+            if (bmp->dib.height > 0) {
+                image.setPixel(x, size.y - y - 1, c);
+            } else {
+                image.setPixel(x, y, c);
+            }
+
+        }
+    }
+
+    sf::Texture t0;
+    t0.loadFromImage(image);
+    return t0;
 }
 
 sf::Texture PictureLoader::ReadRle(std::shared_ptr<const BMP> bmp) {
@@ -312,7 +337,6 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
     double invMaxValueAlpha = 255.0 / maxValueAlpha;
 
     for (uint32_t y = 0; y < size.y; ++y) {
-
         for (uint32_t x = 0; x < size.x; ++x) {
             auto index = pixel[x + y * size.x];
 
@@ -326,12 +350,13 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
                 c.a = ((AlphaMask & index) >> rightShiftAlphaMask) * invMaxValueAlpha;
             }
 
-            image.setPixel(x, y, c);
-        }
-    }
+            if (bmp->dib.height > 0) {
+                image.setPixel(x, size.y - y - 1, c);
+            } else {
+                image.setPixel(x, y, c);
+            }
 
-    if (bmp->dib.height > 0) {
-        image.flipVertically();
+        }
     }
 
     sf::Texture t0;
@@ -347,6 +372,8 @@ std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_pt
     std::vector<uint32_t> result;
 
     sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
+    result.reserve(size.x * size.y);
+
     uint32_t byte_per_pixel = bmp->dib.bitsPerPixel / 8;
 
     auto it = bmp->rawPixel.begin();
@@ -355,7 +382,6 @@ std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_pt
             uint32_t pixel = 0;
             if (byte_per_pixel != 0) {
                 for (uint32_t i = 0; i < byte_per_pixel; ++i) {
-                    //pixel <<= 8u;
                     uint32_t tym = *(it++);
                     pixel |= tym << (8u * i);
                 }
