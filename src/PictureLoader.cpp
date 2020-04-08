@@ -376,9 +376,9 @@ std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_pt
             }
         }
         /**To 4baits*/
-        uint32_t padding = (size.y * byte_per_pixel) % 4;
+        uint32_t padding = (size.x * byte_per_pixel) % 4;
         if (byte_per_pixel == 0) {
-            auto bit = size.y * bmp->dib.bitsPerPixel;
+            auto bit = size.x * bmp->dib.bitsPerPixel;
             auto byte = (bit + 7) / 8;
             padding = byte % 4;
         }
