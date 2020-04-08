@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <map>
 #include <extlibs/SFML/include/SFML/Graphics.hpp>
+#include <include/PictureTransformer.h>
 
 #define BIG_ENDIAN 0
 #define LITTLE_ENDIAN 1
@@ -24,11 +25,10 @@ int main() {
         }
     }
 
-    PictureLoader loader;
     std::shared_ptr<BMP> bmp;
 
     try {
-        bmp = loader.load("b.bmp");
+        bmp = PictureLoader::load("b.bmp");
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
@@ -48,7 +48,7 @@ int main() {
     std::cout << bmp->dib;
 
     try {
-        bmp->picture = loader.createPicture(bmp);
+        bmp->picture = PictureLoader::createPicture(bmp);
         bmp->picture.loadFromFile("b2.bmp");
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
@@ -58,24 +58,11 @@ int main() {
         std::terminate();
     }
 
-    sf::Shader shader;
 
     try {
-        shader.loadFromFile("resources/black_and_white.frag", sf::Shader::Fragment);
-        shader.setUniform("texture", sf::Shader::CurrentTexture);
+        PictureTransformer transformer;
 
-        sf::RenderTexture t0;
-        t0.create(bmp->picture.getSize().x, bmp->picture.getSize().y);
-
-        sf::RenderStates states;
-        states.blendMode = sf::BlendAdd;
-        states.shader = &shader;
-
-        sf::Sprite s0(bmp->picture);
-        t0.draw(s0, states);
-        t0.display();
-
-        bmp->picture_white_black = t0.getTexture();
+        bmp->picture_white_black = transformer.toWhiteBlack(bmp->picture);
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();

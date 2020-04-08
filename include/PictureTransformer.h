@@ -6,9 +6,17 @@
 #define BMP_PICTURETRANSFORMER_H
 
 
+#include <extlibs/SFML/include/SFML/Graphics/Texture.hpp>
+#include <extlibs/SFML/include/SFML/Graphics/Shader.hpp>
+
 class PictureTransformer {
 public:
-    static sf::Texture toWhiteBlack(const sf::Texture &);
+    PictureTransformer();
+
+    sf::Texture toWhiteBlack(const sf::Texture &);
+
+private:
+    sf::Shader shader;
 };
 
 
