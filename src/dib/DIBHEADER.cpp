@@ -4,13 +4,13 @@
 
 #include <include/dib/DIBHEADER.h>
 #include <map>
-#include <include/dib/BITMAPCOREHEADER.h>
-#include <include/dib/OS22XBITMAPHEADER.h>
-#include <include/dib/BITMAPINFOHEADER.h>
-#include <include/dib/BITMAPV2INFOHEADER.h>
-#include <include/dib/BITMAPV3INFOHEADER.h>
-#include <include/dib/BITMAPV4HEADER.h>
-#include <include/dib/BITMAPV5HEADER.h>
+#include <include/dib/BITMAP_M_COREHEADER.h>
+#include <include/dib/OS22XBITMAP_M_HEADER.h>
+#include <include/dib/BITMAP_M_INFOHEADER.h>
+#include <include/dib/BITMAP_M_V2INFOHEADER.h>
+#include <include/dib/BITMAP_M_V3INFOHEADER.h>
+#include <include/dib/BITMAP_M_V4HEADER.h>
+#include <include/dib/BITMAP_M_V5HEADER.h>
 
 /*
 template<typename T>
@@ -62,14 +62,14 @@ std::ostream &operator<<(std::ostream &l, const DIBHEADER &dib) {
     l << "dibSize: " << dib.dibSize << "-";
     {
         std::map<uint32_t, std::string> size_type_string = {
-                {sizeof(BITMAPCOREHEADER),   "BITMAPCOREHEADER"},
-                {sizeof(OS22XBITMAPHEADER),  "OS22XBITMAPHEADER"},
-                {16,                         "OS22XBITMAPHEADER-LITTLE"},
-                {sizeof(BITMAPINFOHEADER),   "BITMAPINFOHEADER"},
-                {sizeof(BITMAPV2INFOHEADER), "BITMAPV2INFOHEADER"},
-                {sizeof(BITMAPV3INFOHEADER), "BITMAPV3INFOHEADER"},
-                {sizeof(BITMAPV4HEADER),     "BITMAPV4HEADER"},
-                {sizeof(BITMAPV5HEADER),     "BITMAPV5HEADER"},
+                {sizeof(BITMAP_M_COREHEADER),   "BITMAP_M_COREHEADER"},
+                {sizeof(OS22XBITMAP_M_HEADER),  "OS22XBITMAP_M_HEADER"},
+                {16,                            "OS22XBITMAP_M_HEADER-LITTLE"},
+                {sizeof(BITMAP_M_INFOHEADER),   "BITMAP_M_INFOHEADER"},
+                {sizeof(BITMAP_M_V2INFOHEADER), "BITMAP_M_V2INFOHEADER"},
+                {sizeof(BITMAP_M_V3INFOHEADER), "BITMAP_M_V3INFOHEADER"},
+                {sizeof(BITMAP_M_V4HEADER),     "BITMAP_M_V4HEADER"},
+                {sizeof(BITMAP_M_V5HEADER),     "BITMAP_M_V5HEADER"},
         };
         l << size_type_string[dib.dibSize] << std::endl;
     }
@@ -79,7 +79,7 @@ std::ostream &operator<<(std::ostream &l, const DIBHEADER &dib) {
     l << "planesNumber: " << dib.planesNumber << std::endl;
     l << "bitsPerPixel: " << dib.bitsPerPixel << std::endl;
 
-    if (dib.dibSize == sizeof(BITMAPCOREHEADER)) { return l; }
+    if (dib.dibSize == sizeof(BITMAP_M_COREHEADER)) { return l; }
     if (dib.dibSize == 16) { return l; }    //os22-little
 
     l << "compressionType: " << static_cast<uint32_t >(dib.compressionType) << "-";
@@ -107,12 +107,12 @@ std::ostream &operator<<(std::ostream &l, const DIBHEADER &dib) {
     l << "paletteColorsNumber: " << dib.paletteColorsNumber << std::endl;
     l << "importantColors: " << dib.importantColors << std::endl;
 
-    if (dib.dibSize == sizeof(BITMAPINFOHEADER) && dib.compressionType != BmpCompression::BI_BITFIELDS &&
+    if (dib.dibSize == sizeof(BITMAP_M_INFOHEADER) && dib.compressionType != BmpCompression::BI_BITFIELDS &&
         dib.compressionType != BmpCompression::BI_ALPHABITFIELDS) {
         return l;
     }
 
-    if (dib.dibSize == sizeof(OS22XBITMAPHEADER)) {
+    if (dib.dibSize == sizeof(OS22XBITMAP_M_HEADER)) {
         goto os22;
     }
 
@@ -120,19 +120,19 @@ std::ostream &operator<<(std::ostream &l, const DIBHEADER &dib) {
     l << "GreenMask: " << printf_binary(dib.GreenMask) << std::endl;
     l << "BlueMask:  " << printf_binary(dib.BlueMask) << std::endl;
 
-    if (dib.dibSize == sizeof(BITMAPINFOHEADER) && dib.compressionType != BmpCompression::BI_ALPHABITFIELDS) {
+    if (dib.dibSize == sizeof(BITMAP_M_INFOHEADER) && dib.compressionType != BmpCompression::BI_ALPHABITFIELDS) {
         return l;
     }
-    if (dib.dibSize == sizeof(BITMAPV2INFOHEADER)) {
+    if (dib.dibSize == sizeof(BITMAP_M_V2INFOHEADER)) {
         return l;
     }
 
     l << "AlphaMask: " << printf_binary(dib.AlphaMask) << std::endl;
 
-    if (dib.dibSize == sizeof(BITMAPINFOHEADER)) {
+    if (dib.dibSize == sizeof(BITMAP_M_INFOHEADER)) {
         return l;
     }
-    if (dib.dibSize == sizeof(BITMAPV3INFOHEADER)) {
+    if (dib.dibSize == sizeof(BITMAP_M_V3INFOHEADER)) {
         return l;
     }
 
@@ -150,7 +150,7 @@ std::ostream &operator<<(std::ostream &l, const DIBHEADER &dib) {
     l << "GammaGreen: " << dib.GammaGreen << std::endl;
     l << "GammaBlue: " << dib.GammaBlue << std::endl;
 
-    if (dib.dibSize == sizeof(BITMAPV4HEADER)) {
+    if (dib.dibSize == sizeof(BITMAP_M_V4HEADER)) {
         return l;
     }
 

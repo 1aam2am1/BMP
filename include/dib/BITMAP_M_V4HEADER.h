@@ -2,14 +2,14 @@
 // Created by Michal_Marszalek on 02.04.2020.
 //
 
-#ifndef BMP_BITMAPV4HEADER_H
-#define BMP_BITMAPV4HEADER_H
+#ifndef BMP_BITMAP_M_V4HEADER_H
+#define BMP_BITMAP_M_V4HEADER_H
 
-#include "dib/BITMAPV3INFOHEADER.h"
+#include "dib/BITMAP_M_V3INFOHEADER.h"
 
 #pragma pack(push, 1)
 
-struct BITMAPV4HEADER : BITMAPV3INFOHEADER {
+struct BITMAP_M_V4HEADER : BITMAP_M_V3INFOHEADER {
     uint32_t CSType;        /* Color space type */
     int32_t RedX;          /* X coordinate of red endpoint */
     int32_t RedY;          /* Y coordinate of red endpoint */
@@ -29,7 +29,7 @@ struct BITMAPV4HEADER : BITMAPV3INFOHEADER {
 
 #pragma pack(pop)
 
-static_assert(offsetof(BITMAPV4HEADER, CSType) == sizeof(BITMAPV3INFOHEADER), "Wrong alignment of data");
-static_assert(sizeof(BITMAPV4HEADER) == 108, "Wrong alignment of data");
+static_assert(offsetof(BITMAP_M_V4HEADER, CSType) == sizeof(BITMAP_M_V3INFOHEADER), "Wrong alignment of data");
+static_assert(sizeof(BITMAP_M_V4HEADER) == 108, "Wrong alignment of data");
 
-#endif //BMP_BITMAPV4HEADER_H
+#endif //BMP_BITMAP_M_V4HEADER_H

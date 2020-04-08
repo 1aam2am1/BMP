@@ -2,12 +2,12 @@
 // Created by Michal_Marszalek on 03.04.2020.
 //
 
-#include <include/dib/BITMAPCOREHEADER.h>
+#include <include/dib/BITMAP_M_COREHEADER.h>
 #include <include/DEFINES.h>
 
-DIBHEADER BITMAPCOREHEADER::load(FILE *f) {
+DIBHEADER BITMAP_M_COREHEADER::load(FILE *f) {
     DIBHEADER header{};
-    BITMAPCOREHEADER device{};
+    BITMAP_M_COREHEADER device{};
 
     READ_FILE(dibSize);
     READ_FILE(width);

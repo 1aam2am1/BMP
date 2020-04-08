@@ -2,14 +2,14 @@
 // Created by Michal_Marszalek on 03.04.2020.
 //
 
-#include <include/dib/BITMAPV4HEADER.h>
+#include <include/dib/BITMAP_M_V4HEADER.h>
 #include "DEFINES.h"
 
-DIBHEADER BITMAPV4HEADER::load(FILE *f) {
+DIBHEADER BITMAP_M_V4HEADER::load(FILE *f) {
     DIBHEADER header{};
-    BITMAPV4HEADER device{};
+    BITMAP_M_V4HEADER device{};
 
-    header = BITMAPV3INFOHEADER::load(f);
+    header = BITMAP_M_V3INFOHEADER::load(f);
 
     READ_FILE(CSType);
     READ_FILE(RedX);

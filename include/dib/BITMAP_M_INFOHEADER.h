@@ -2,8 +2,8 @@
 // Created by Michal_Marszalek on 02.04.2020.
 //
 
-#ifndef BMP_BITMAPINFOHEADER_H
-#define BMP_BITMAPINFOHEADER_H
+#ifndef BMP_BITMAP_M_INFOHEADER_H
+#define BMP_BITMAP_M_INFOHEADER_H
 
 #include <cstdio>
 #include <cstdint>
@@ -11,7 +11,7 @@
 
 #pragma pack(push, 1)
 
-struct BITMAPINFOHEADER {
+struct BITMAP_M_INFOHEADER {
     uint32_t dibSize;
     int32_t width;
     int32_t height;
@@ -29,6 +29,6 @@ struct BITMAPINFOHEADER {
 
 #pragma pack(pop)
 
-static_assert(sizeof(BITMAPINFOHEADER) == 40, "Wrong alignment of data");
+static_assert(sizeof(BITMAP_M_INFOHEADER) == 40, "Wrong alignment of data");
 
-#endif //BMP_BITMAPINFOHEADER_H
+#endif //BMP_BITMAP_M_INFOHEADER_H

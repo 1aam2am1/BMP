@@ -2,8 +2,8 @@
 // Created by Michal_Marszalek on 02.04.2020.
 //
 
-#ifndef BMP_BITMAPCOREHEADER_H
-#define BMP_BITMAPCOREHEADER_H
+#ifndef BMP_BITMAP_M_COREHEADER_H
+#define BMP_BITMAP_M_COREHEADER_H
 
 #include <cstdio>
 #include <cstdint>
@@ -11,7 +11,7 @@
 
 #pragma pack(push, 1)
 
-struct BITMAPCOREHEADER {
+struct BITMAP_M_COREHEADER {
     uint32_t dibSize;
     int16_t width;         //uint16_t   OS21XBITMAPHEADER
     int16_t height;        //uint16_t   OS21XBITMAPHEADER
@@ -23,8 +23,8 @@ struct BITMAPCOREHEADER {
 
 #pragma pack(pop)
 
-typedef BITMAPCOREHEADER OS21XBITMAPHEADER;
+typedef BITMAP_M_COREHEADER OS21XBITMAPHEADER;
 
-static_assert(sizeof(BITMAPCOREHEADER) == 12, "Wrong alignment of data");
+static_assert(sizeof(BITMAP_M_COREHEADER) == 12, "Wrong alignment of data");
 
-#endif //BMP_BITMAPCOREHEADER_H
+#endif //BMP_BITMAP_M_COREHEADER_H

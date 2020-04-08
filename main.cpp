@@ -49,7 +49,7 @@ int main() {
 
     try {
         bmp->picture = PictureLoader::createPicture(bmp);
-        bmp->picture.loadFromFile("b2.bmp");
+        //bmp->picture.loadFromFile("b2.bmp");
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
@@ -78,6 +78,8 @@ int main() {
             {static_cast<unsigned int>(std::abs(bmp->dib.width)), static_cast<unsigned int>(std::abs(bmp->dib.height))},
             "BMP Picture",
             sf::Style::Titlebar | sf::Style::Close);
+
+    window.setFramerateLimit(10);
 
     sf::Sprite sp(bmp->picture);
     const sf::Texture *texture_table[] = {&bmp->picture, &bmp->picture_white_black, &bmp->laplace};

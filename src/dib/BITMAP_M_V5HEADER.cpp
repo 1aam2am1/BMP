@@ -2,14 +2,14 @@
 // Created by Michal_Marszalek on 03.04.2020.
 //
 
-#include <include/dib/BITMAPV5HEADER.h>
+#include <include/dib/BITMAP_M_V5HEADER.h>
 #include "DEFINES.h"
 
-DIBHEADER BITMAPV5HEADER::load(FILE *f) {
+DIBHEADER BITMAP_M_V5HEADER::load(FILE *f) {
     DIBHEADER header{};
-    BITMAPV5HEADER device{};
+    BITMAP_M_V5HEADER device{};
 
-    header = BITMAPV4HEADER::load(f);
+    header = BITMAP_M_V4HEADER::load(f);
 
     READ_FILE(Intent);
     READ_FILE(ProfileData);

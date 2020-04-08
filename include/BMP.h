@@ -9,13 +9,13 @@
 #include <include/dib/DIBHEADER.h>
 #include <vector>
 #include <extlibs/SFML/include/SFML/Graphics/Texture.hpp>
-#include "include/dib/BITMAPCOREHEADER.h"
-#include "include/dib/BITMAPINFOHEADER.h"
-#include "include/dib/BITMAPV2INFOHEADER.h"
-#include "include/dib/BITMAPV3INFOHEADER.h"
-#include "include/dib/BITMAPV4HEADER.h"
-#include "include/dib/BITMAPV5HEADER.h"
-#include "include/dib/OS22XBITMAPHEADER.h"
+#include "include/dib/BITMAP_M_COREHEADER.h"
+#include "include/dib/BITMAP_M_INFOHEADER.h"
+#include "include/dib/BITMAP_M_V2INFOHEADER.h"
+#include "include/dib/BITMAP_M_V3INFOHEADER.h"
+#include "include/dib/BITMAP_M_V4HEADER.h"
+#include "include/dib/BITMAP_M_V5HEADER.h"
+#include "include/dib/OS22XBITMAP_M_HEADER.h"
 #include "BMP_HEADER.h"
 #include "Color.h"
 
@@ -35,6 +35,9 @@ struct BMP {
     ///end of file
     GAP gap3;
     ///real end of file;
+
+    ///Additional data that should be 0
+    mutable GAP additional_data;
 
 
     /**Beginning of data unpacked data*/

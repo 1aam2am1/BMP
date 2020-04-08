@@ -2,12 +2,12 @@
 // Created by Michal_Marszalek on 03.04.2020.
 //
 
-#include <include/dib/OS22XBITMAPHEADER.h>
+#include <include/dib/OS22XBITMAP_M_HEADER.h>
 #include <include/DEFINES.h>
 
-DIBHEADER OS22XBITMAPHEADER::load(FILE *f) {
+DIBHEADER OS22XBITMAP_M_HEADER::load(FILE *f) {
     DIBHEADER header{};
-    OS22XBITMAPHEADER device{};
+    OS22XBITMAP_M_HEADER device{};
 
     READ_FILE(dibSize);     //4
     READ_FILE(width);       //8

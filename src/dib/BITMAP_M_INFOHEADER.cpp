@@ -2,12 +2,12 @@
 // Created by Michal_Marszalek on 03.04.2020.
 //
 
-#include <include/dib/BITMAPINFOHEADER.h>
+#include <include/dib/BITMAP_M_INFOHEADER.h>
 #include <include/DEFINES.h>
 
-DIBHEADER BITMAPINFOHEADER::load(FILE *f) {
+DIBHEADER BITMAP_M_INFOHEADER::load(FILE *f) {
     DIBHEADER header{};
-    BITMAPINFOHEADER device{};
+    BITMAP_M_INFOHEADER device{};
 
     READ_FILE(dibSize);
     READ_FILE(width);
@@ -21,7 +21,7 @@ DIBHEADER BITMAPINFOHEADER::load(FILE *f) {
     READ_FILE(paletteColorsNumber);
     READ_FILE(importantColors);
 
-    if (header.dibSize == sizeof(BITMAPINFOHEADER)) {
+    if (header.dibSize == sizeof(BITMAP_M_INFOHEADER)) {
         switch (header.compressionType) {
             case BmpCompression::BI_BITFIELDS:
                 READ_FILE_SIZE(RedMask, 4);

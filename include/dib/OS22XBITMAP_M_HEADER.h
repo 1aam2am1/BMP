@@ -2,15 +2,15 @@
 // Created by Michal_Marszalek on 02.04.2020.
 //
 
-#ifndef BMP_OS22XBITMAPHEADER_H
-#define BMP_OS22XBITMAPHEADER_H
+#ifndef BMP_OS22XBITMAP_M_HEADER_H
+#define BMP_OS22XBITMAP_M_HEADER_H
 
-#include "dib/BITMAPINFOHEADER.h"
+#include "dib/BITMAP_M_INFOHEADER.h"
 #include "DIBHEADER.h"
 
 #pragma pack(push, 1)
 
-struct OS22XBITMAPHEADER : BITMAPINFOHEADER {
+struct OS22XBITMAP_M_HEADER : BITMAP_M_INFOHEADER {
     uint16_t units;
     uint16_t padding;
     uint16_t recordingOrder;
@@ -25,8 +25,8 @@ struct OS22XBITMAPHEADER : BITMAPINFOHEADER {
 
 #pragma pack(pop)
 
-static_assert(offsetof(OS22XBITMAPHEADER, units) == sizeof(BITMAPINFOHEADER), "Wrong alignment of data");
-static_assert(sizeof(OS22XBITMAPHEADER) == 64, "Wrong alignment of data");
+static_assert(offsetof(OS22XBITMAP_M_HEADER, units) == sizeof(BITMAP_M_INFOHEADER), "Wrong alignment of data");
+static_assert(sizeof(OS22XBITMAP_M_HEADER) == 64, "Wrong alignment of data");
 
 
-#endif //BMP_OS22XBITMAPHEADER_H
+#endif //BMP_OS22XBITMAP_M_HEADER_H

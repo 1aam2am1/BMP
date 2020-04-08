@@ -19,7 +19,7 @@ enum class BmpCompression : uint32_t {
     BI_CMYKRLE8 = 12,
     BI_CMYKRLE4 = 13,
 
-    /**OS22XBITMAPHEADER*/
+    /**OS22XBITMAP_M_HEADER*/
     RLE_24 = 100, ///4
     Huffman = 101, ///3
 };
