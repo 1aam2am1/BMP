@@ -17,8 +17,16 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
     BMP_HEADER header = BMP_HEADER::load(f);
     result->header = header;
 
-    if (header.signature[0] != 0x42 || header.signature[1] != 0x4D) {
-        throw std::runtime_error("Wrong file signature");
+    if (header.signature[0] != 0x42 || header.signature[1] != 0x4D) { //BM
+        if (header.signature[0] == 0x42 && header.signature[1] == 0x41) { //BA
+            BMP_ARRAY_HEADER &array = *reinterpret_cast<BMP_ARRAY_HEADER *>(&header);
+            result->array_header = array;
+
+            header = BMP_HEADER::load(f); //load first possible image from array, discard array
+            result->header = header;
+        } else {
+            throw std::runtime_error("Wrong file signature");
+        }
     }
 
     /**Dib header*/

@@ -25,6 +25,7 @@ struct BMP {
     typedef std::vector<uint8_t> RAW_PIXEL;
     typedef std::vector<uint8_t> GAP;
 
+    BMP_ARRAY_HEADER array_header; //optional only os22!!!
     BMP_HEADER header;
     DIBHEADER dib;
     PALETTE palette;

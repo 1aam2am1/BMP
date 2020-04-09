@@ -40,6 +40,9 @@ int main() {
     /*
      * Display header data
      */
+    if (bmp->array_header.signature[0]) {
+        std::cout << bmp->array_header;
+    }
     std::cout << bmp->header;
 
     /*

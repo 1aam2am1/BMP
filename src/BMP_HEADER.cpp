@@ -28,3 +28,13 @@ std::ostream &operator<<(std::ostream &l, const BMP_HEADER &header) {
 
     return l;
 }
+
+std::ostream &operator<<(std::ostream &l, const BMP_ARRAY_HEADER &header) {
+    l << header.signature[0] << header.signature[1] << std::endl;
+    l << "file_size: " << header.file_size << std::endl;
+    l << "offset_to_next: " << header.offset_to_next << std::endl;
+    l << "screen_width: " << header.screen_width << std::endl;
+    l << "screen_height: " << header.screen_height << std::endl;
+
+    return l;
+}
