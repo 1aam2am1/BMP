@@ -120,8 +120,12 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
     /**Load optional gap between pixel array and color palette*/
     {
         uint32_t sizeOfGap = header.file_offset - ftell(f);
-        result->gap1.resize(sizeOfGap);
-        fread(result->gap1.data(), 1, sizeOfGap, f);
+        if (ftell(f) >= header.file_offset) {
+            //should throw as file_offset is wrong
+        } else {
+            result->gap1.resize(sizeOfGap);
+            fread(result->gap1.data(), 1, sizeOfGap, f);
+        }
     }
 
     /**Pixel array*/
@@ -172,8 +176,12 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
         /**Load optional gap between pixel array and end of file*/
         {
             uint32_t sizeOfGap = header.file_size - ftell(f);
-            result->gap2.resize(sizeOfGap);
-            fread(result->gap2.data(), 1, sizeOfGap, f);
+            if (ftell(f) >= header.file_size) {
+                //should throw as file_size is wrong
+            } else {
+                result->gap2.resize(sizeOfGap);
+                fread(result->gap2.data(), 1, sizeOfGap, f);
+            }
         }
     }
 
@@ -540,7 +548,88 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
 }
 
 sf::Texture PictureLoader::ReadRle24(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
+    sf::Image image;
+    sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
+    image.create(size.x, size.y);
+    auto setPixel = [&](uint32_t x, uint32_t y, const sf::Color c) {
+        if (bmp->dib.height > 0) {
+            image.setPixel(x, size.y - y - 1, c);
+        } else {
+            image.setPixel(x, y, c);
+        }
+    };
+
+    uint64_t count = 0;
+    bool new_line = false;
+    auto setPixelC = [&](const sf::Color c) {
+        new_line = false;
+        setPixel(count % size.x, count / size.x, c);
+        ++count;
+        if (count % size.x == 0) { new_line = true; }
+    };
+
+    const sf::Color skipped = {0, 0, 0, 255};
+
+    for (auto it = bmp->rawPixel.begin(); it != bmp->rawPixel.end();) {
+        auto cmd = *(it++);
+        if (cmd == 0) {
+            cmd = *(it++);
+            switch (cmd) {
+                case 0: { ///end-of-scan-line marker
+                    if (!new_line) {
+                        while (!new_line) {
+                            setPixelC(skipped);
+                        }
+                    }
+                    new_line = false;
+                }
+                    break;
+                case 1: { /// RLE data marker, end of decoding
+                    while (count < size.x * size.y) {
+                        setPixelC(skipped);
+                    }
+                    for (; it != bmp->rawPixel.end(); ++it) {
+                        bmp->additional_data.push_back(*it);
+                    }
+                }
+                    break;
+                case 2: { ///delta
+                    auto dx = *(it++);
+                    auto dy = *(it++);
+                    auto new_count = count + dy * size.x + dx;
+                    while (count < new_count) {
+                        setPixelC(skipped);
+                    }
+                }
+                    break;
+                default: { ///unencoded run, absolute mode
+                    for (uint32_t i = 0; i < cmd; ++i) {
+                        sf::Color color;
+                        color.b = *(it++);
+                        color.g = *(it++);
+                        color.r = *(it++);
+                        setPixelC(color);
+                    }
+                    // Absolute mode data is aligned to two-byte word-boundary.
+                    auto padding = (cmd * 3u) & 1u;
+                    if (padding) { ++it; }
+                }
+                    break;
+            }
+        } else { ///encoded run
+            sf::Color color;
+            color.b = *(it++);
+            color.g = *(it++);
+            color.r = *(it++);
+            for (uint32_t i = 0; i < cmd; ++i) {
+                setPixelC(color);
+            }
+        }
+    }
+
+    sf::Texture t0;
+    t0.loadFromImage(image);
+    return t0;
 }
 
 std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_ptr<const BMP> &bmp) {
