@@ -26,7 +26,9 @@ private:
 
     static sf::Texture ReadRgbPalette(std::shared_ptr<const BMP>);
 
-    static sf::Texture ReadRle(std::shared_ptr<const BMP>);
+    static sf::Texture ReadRle4(std::shared_ptr<const BMP>);
+
+    static sf::Texture ReadRle8(std::shared_ptr<const BMP>);
 
     static sf::Texture ReadBitFields(std::shared_ptr<const BMP>);
 

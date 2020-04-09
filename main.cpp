@@ -49,7 +49,6 @@ int main() {
 
     try {
         bmp->picture = PictureLoader::createPicture(bmp);
-        //bmp->picture.loadFromFile("b2.bmp");
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();

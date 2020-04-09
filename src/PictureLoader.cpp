@@ -215,8 +215,9 @@ sf::Texture PictureLoader::createPicture(const std::shared_ptr<const BMP> &bmp) 
                 throw std::runtime_error("Not supported bitsPerPixel");
             }
         case BmpCompression::BI_RLE8:
+            return ReadRle8(bmp);
         case BmpCompression::BI_RLE4:
-            return ReadRle(bmp);
+            return ReadRle4(bmp);
         case BmpCompression::BI_BITFIELDS:
         case BmpCompression::BI_ALPHABITFIELDS:
             return ReadBitFields(bmp);
@@ -279,6 +280,13 @@ sf::Texture PictureLoader::ReadRgbPalette(std::shared_ptr<const BMP> bmp) {
     sf::Image image;
     sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
     image.create(size.x, size.y);
+    auto setPixel = [&](uint32_t x, uint32_t y, const sf::Color c) {
+        if (bmp->dib.height > 0) {
+            image.setPixel(x, size.y - y - 1, c);
+        } else {
+            image.setPixel(x, y, c);
+        }
+    };
 
     auto pixel = PictureLoader::getUncompressedPixel32(bmp);
 
@@ -290,12 +298,7 @@ sf::Texture PictureLoader::ReadRgbPalette(std::shared_ptr<const BMP> bmp) {
 
             c = bmp->palette[index];
 
-            if (bmp->dib.height > 0) {
-                image.setPixel(x, size.y - y - 1, c);
-            } else {
-                image.setPixel(x, y, c);
-            }
-
+            setPixel(x, y, c);
         }
     }
 
@@ -304,14 +307,191 @@ sf::Texture PictureLoader::ReadRgbPalette(std::shared_ptr<const BMP> bmp) {
     return t0;
 }
 
-sf::Texture PictureLoader::ReadRle(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
+sf::Texture PictureLoader::ReadRle4(std::shared_ptr<const BMP> bmp) {
+    sf::Image image;
+    sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
+    image.create(size.x, size.y);
+    auto setPixel = [&](uint32_t x, uint32_t y, const sf::Color c) {
+        if (bmp->dib.height > 0) {
+            image.setPixel(x, size.y - y - 1, c);
+        } else {
+            image.setPixel(x, y, c);
+        }
+    };
+
+    uint64_t count = 0;
+    bool new_line = false;
+    auto setPixelC = [&](const sf::Color c) {
+        new_line = false;
+        setPixel(count % size.x, count / size.x, c);
+        ++count;
+        if (count % size.x == 0) { new_line = true; }
+    };
+
+    const sf::Color skipped = {0, 0, 0, 255};
+
+    for (auto it = bmp->rawPixel.begin(); it != bmp->rawPixel.end();) {
+        auto cmd = *(it++);
+        if (cmd == 0) {
+            cmd = *(it++);
+            switch (cmd) {
+                case 0: { ///end-of-scan-line marker
+                    if (!new_line) {
+                        while (!new_line) {
+                            setPixelC(skipped);
+                        }
+                    }
+                    new_line = false;
+                }
+                    break;
+                case 1: { /// RLE data marker, end of decoding
+                    while (count < size.x * size.y) {
+                        setPixelC(skipped);
+                    }
+                    for (; it != bmp->rawPixel.end(); ++it) {
+                        bmp->additional_data.push_back(*it);
+                    }
+                }
+                    break;
+                case 2: { ///delta
+                    auto dx = *(it++);
+                    auto dy = *(it++);
+                    auto new_count = count + dy * size.x + dx;
+                    while (count < new_count) {
+                        setPixelC(skipped);
+                    }
+                }
+                    break;
+                default: { ///unencoded run ,absolute mode
+                    sf::Color color;
+                    uint32_t index{};
+
+                    for (uint32_t i = 0; i < cmd; ++i) {
+                        if (i % 2 == 0) {
+                            index = *(it++);
+                            color = bmp->palette[(index & 0xF0u) >> 4u];
+                        } else {
+                            color = bmp->palette[index & 0x0Fu];
+                        }
+                        setPixelC(color);
+                    }
+                    // Absolute mode data is aligned to two-byte word-boundary.
+                    auto padding = ((cmd + 1) / 2u) & 1u;
+                    if (padding) { ++it; }
+                }
+                    break;
+            }
+        } else { ///encoded run
+            sf::Color color;
+            auto index = *(it++);
+
+            for (uint32_t i = 0; i < cmd; ++i) {
+                if (i % 2 == 0) {
+                    color = bmp->palette[(index & 0xF0u) >> 4u];
+                } else {
+                    color = bmp->palette[index & 0x0Fu];
+                }
+                setPixelC(color);
+            }
+        }
+    }
+
+    sf::Texture t0;
+    t0.loadFromImage(image);
+    return t0;
+}
+
+//8bit mode
+sf::Texture PictureLoader::ReadRle8(std::shared_ptr<const BMP> bmp) {
+    sf::Image image;
+    sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
+    image.create(size.x, size.y);
+    auto setPixel = [&](uint32_t x, uint32_t y, const sf::Color c) {
+        if (bmp->dib.height > 0) {
+            image.setPixel(x, size.y - y - 1, c);
+        } else {
+            image.setPixel(x, y, c);
+        }
+    };
+
+    uint64_t count = 0;
+    bool new_line = false;
+    auto setPixelC = [&](const sf::Color c) {
+        new_line = false;
+        setPixel(count % size.x, count / size.x, c);
+        ++count;
+        if (count % size.x == 0) { new_line = true; }
+    };
+
+    const sf::Color skipped = {0, 0, 0, 255};
+
+    for (auto it = bmp->rawPixel.begin(); it != bmp->rawPixel.end();) {
+        auto cmd = *(it++);
+        if (cmd == 0) {
+            cmd = *(it++);
+            switch (cmd) {
+                case 0: { ///end-of-scan-line marker
+                    if (!new_line) {
+                        while (!new_line) {
+                            setPixelC(skipped);
+                        }
+                    }
+                    new_line = false;
+                }
+                    break;
+                case 1: { /// RLE data marker, end of decoding
+                    while (count < size.x * size.y) {
+                        setPixelC(skipped);
+                    }
+                    for (; it != bmp->rawPixel.end(); ++it) {
+                        bmp->additional_data.push_back(*it);
+                    }
+                }
+                    break;
+                case 2: { ///delta
+                    auto dx = *(it++);
+                    auto dy = *(it++);
+                    auto new_count = count + dy * size.x + dx;
+                    while (count < new_count) {
+                        setPixelC(skipped);
+                    }
+                }
+                    break;
+                default: { ///unencoded run, absolute mode
+                    for (uint32_t i = 0; i < cmd; ++i) {
+                        auto color = bmp->palette[*(it++)];
+                        setPixelC(color);
+                    }
+                    // Absolute mode data is aligned to two-byte word-boundary.
+                    auto padding = cmd & 1u;
+                    if (padding) { ++it; }
+                }
+                    break;
+            }
+        } else { ///encoded run
+            auto color = bmp->palette[*(it++)];
+            for (uint32_t i = 0; i < cmd; ++i) {
+                setPixelC(color);
+            }
+        }
+    }
+
+    sf::Texture t0;
+    t0.loadFromImage(image);
+    return t0;
 }
 
 sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
     sf::Image image;
     sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
     image.create(size.x, size.y);
+    auto setPixel = [&](uint32_t x, uint32_t y, const sf::Color c) {
+        if (bmp->dib.height > 0) {
+            image.setPixel(x, size.y - y - 1, c);
+        } else {
+            image.setPixel(x, y, c);
+        }
+    };
 
     auto pixel = PictureLoader::getUncompressedPixel32(bmp);
 
@@ -350,12 +530,7 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
                 c.a = ((AlphaMask & index) >> rightShiftAlphaMask) * invMaxValueAlpha;
             }
 
-            if (bmp->dib.height > 0) {
-                image.setPixel(x, size.y - y - 1, c);
-            } else {
-                image.setPixel(x, y, c);
-            }
-
+            setPixel(x, y, c);
         }
     }
 
