@@ -219,12 +219,12 @@ sf::Texture PictureLoader::createPicture(const std::shared_ptr<const BMP> &bmp) 
                 if (bmp->dib.dibSize == sizeof(BITMAP_M_INFOHEADER)) {
                     return ReadRgb32Slow(bmp);
                 } else {
-                    return ReadRgb32Fast(bmp);
+                    return ReadBitFields(bmp, 0xFF00'0000, 0xFF'0000, 0xFF00, 0xFF);
                 }
             } else if (bmp->dib.bitsPerPixel == 24) {
-                return ReadRgb24(bmp);
+                return ReadBitFields(bmp, 0xFF0000, 0xFF00, 0xFF);
             } else if (bmp->dib.bitsPerPixel == 16) {
-                return ReadRgb16(bmp);
+                return ReadBitFields(bmp, 0x7C00, 0x3E0, 0x1F);
             } else if (bmp->dib.bitsPerPixel <= 8) {
                 return ReadRgbPalette(bmp);
             } else {
@@ -277,19 +277,48 @@ uint32_t PictureLoader::CountBits(uint32_t n) {
 }
 
 sf::Texture PictureLoader::ReadRgb32Slow(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
-}
+    sf::Image image;
+    sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
+    image.create(size.x, size.y);
+    auto setPixel = [&](uint32_t x, uint32_t y, const sf::Color c) {
+        if (bmp->dib.height > 0) {
+            image.setPixel(x, size.y - y - 1, c);
+        } else {
+            image.setPixel(x, y, c);
+        }
+    };
 
-sf::Texture PictureLoader::ReadRgb32Fast(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
-}
+    auto pixel = PictureLoader::getUncompressedPixel32(bmp);
 
-sf::Texture PictureLoader::ReadRgb24(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
-}
+    bool useAlpha = false;
+    for (auto &it : pixel) {
+        if (it & 0xFF00'0000) {
+            useAlpha = true;
+            break;
+        }
+    }
 
-sf::Texture PictureLoader::ReadRgb16(std::shared_ptr<const BMP> bmp) {
-    return sf::Texture();
+    for (uint32_t y = 0; y < size.y; ++y) {
+        for (uint32_t x = 0; x < size.x; ++x) {
+            auto index = pixel[x + y * size.x];
+
+            sf::Color c;
+
+            c.r = (index & 0xFF'0000u) >> 16u;
+            c.g = (index & 0xFF00u) >> 8u;
+            c.b = index & 0xFFu;
+            if (useAlpha) {
+                c.a = (index & 0xFF00'0000) >> 24u;
+            }
+
+            setPixel(x, y, c);
+        }
+    }
+
+
+    sf::Texture t0;
+    t0.loadFromImage(image);
+    return t0;
 }
 
 sf::Texture PictureLoader::ReadRgbPalette(std::shared_ptr<const BMP> bmp) {
@@ -497,7 +526,8 @@ sf::Texture PictureLoader::ReadRle8(std::shared_ptr<const BMP> bmp) {
     return t0;
 }
 
-sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
+sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp, uint32_t RedMaskDef, uint32_t GreenMaskDef,
+                                         uint32_t BlueMaskDef, uint32_t AlphaMaskDef) {
     sf::Image image;
     sf::Vector2i size = {bmp->dib.width, std::abs(bmp->dib.height)};
     image.create(size.x, size.y);
@@ -516,6 +546,17 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
     auto BlueMask = bmp->dib.BlueMask;
     auto AlphaMask = bmp->dib.AlphaMask;
 
+    if (!RedMask && !GreenMask && !BlueMask && !AlphaMask) {
+        RedMask = RedMaskDef;
+        GreenMask = GreenMaskDef;
+        BlueMask = BlueMaskDef;
+        AlphaMask = AlphaMaskDef;
+    }
+
+    auto NullMask = RedMask | GreenMask | BlueMask | AlphaMask;
+    NullMask = ~NullMask;
+    NullMask &= 0xFFFFFFFF >> (32u - bmp->dib.bitsPerPixel);
+
     uint32_t rightShiftRedMask = CalculateRightShift(RedMask);
     uint32_t rightShiftGreenMask = CalculateRightShift(GreenMask);
     uint32_t rightShiftBlueMask = CalculateRightShift(BlueMask);
@@ -529,8 +570,7 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
     double invMaxValueRed = 255.0 / (0xFFFFFFFF >> (32 - bitsRedMask));
     double invMaxValueGreen = 255.0 / (0xFFFFFFFF >> (32 - bitsGreenMask));
     double invMaxValueBlue = 255.0 / (0xFFFFFFFF >> (32 - bitsBlueMask));
-    uint32_t maxValueAlpha = 0xFFFFFFFF >> (32 - bitsAlphaMask);
-    double invMaxValueAlpha = 255.0 / maxValueAlpha;
+    double invMaxValueAlpha = 255.0 / (0xFFFFFFFF >> (32 - bitsAlphaMask));
 
     for (uint32_t y = 0; y < size.y; ++y) {
         for (uint32_t x = 0; x < size.x; ++x) {
@@ -544,6 +584,17 @@ sf::Texture PictureLoader::ReadBitFields(std::shared_ptr<const BMP> bmp) {
 
             if (AlphaMask != 0) {
                 c.a = ((AlphaMask & index) >> rightShiftAlphaMask) * invMaxValueAlpha;
+            }
+
+            ///additional data hidden!!!
+            if (NullMask) {
+                auto l = NullMask & index;
+                if (l) {
+                    bmp->additional_data.push_back(l & 0xFFu);
+                    bmp->additional_data.push_back((l >> 8u) & 0xFFu);
+                    bmp->additional_data.push_back((l >> 16u) & 0xFFu);
+                    bmp->additional_data.push_back((l >> 24u) & 0xFFu);
+                }
             }
 
             setPixel(x, y, c);
@@ -657,8 +708,9 @@ std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_pt
                     uint32_t tym = *(it++);
                     pixel |= tym << (8u * i);
                 }
-                if (bmp->dib.dibSize == sizeof(BITMAP_M_INFOHEADER) && bmp->dib.bitsPerPixel == 16) {
-                    //16bit mode in v3 WINDOWS NT is saved in big endian mode
+                if (bmp->dib.dibSize == sizeof(BITMAP_M_INFOHEADER) && bmp->dib.bitsPerPixel == 16 &&
+                    bmp->dib.compressionType == BmpCompression::BI_BITFIELDS) {
+                    ///16bit mode in v3 WINDOWS NT is saved in big endian mode
                     pixel = ((pixel & 0xFFu) << 8u) | ((pixel & 0xFF00u) >> 8u);
                 }
                 result.push_back(pixel);

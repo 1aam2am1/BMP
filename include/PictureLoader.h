@@ -18,19 +18,15 @@ public:
 private:
     static sf::Texture ReadRgb32Slow(std::shared_ptr<const BMP>);
 
-    static sf::Texture ReadRgb32Fast(std::shared_ptr<const BMP>);
-
-    static sf::Texture ReadRgb24(std::shared_ptr<const BMP>);
-
-    static sf::Texture ReadRgb16(std::shared_ptr<const BMP>);
-
     static sf::Texture ReadRgbPalette(std::shared_ptr<const BMP>);
 
     static sf::Texture ReadRle4(std::shared_ptr<const BMP>);
 
     static sf::Texture ReadRle8(std::shared_ptr<const BMP>);
 
-    static sf::Texture ReadBitFields(std::shared_ptr<const BMP>);
+    static sf::Texture
+    ReadBitFields(std::shared_ptr<const BMP>, uint32_t RedMaskDef = 0xFF0000u, uint32_t GreenMaskDef = 0xFF00u,
+                  uint32_t BlueMaskDef = 0xFFu, uint32_t AlphaMaskDef = 0);
 
     static sf::Texture ReadRle24(std::shared_ptr<const BMP>);
 
