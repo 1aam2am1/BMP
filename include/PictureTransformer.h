@@ -15,8 +15,15 @@ public:
 
     sf::Texture toWhiteBlack(const sf::Texture &);
 
+    /* Only red chanel
+     *
+     */
+    sf::Texture fourier(const sf::Texture &);
+
 private:
     sf::Shader shader;
+
+
 };
 
 

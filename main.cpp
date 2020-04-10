@@ -73,17 +73,30 @@ int main() {
         std::terminate();
     }
 
+    try {
+        PictureTransformer transformer;
+
+        bmp->laplace = transformer.fourier(bmp->picture_white_black);
+    } catch (const std::exception &e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+        std::terminate();
+    } catch (...) {
+        std::cout << "Exception with no data" << std::endl;
+        std::terminate();
+    }
+
 
     sf::RenderWindow window;
 
     window.create(
-            {static_cast<unsigned int>(std::abs(bmp->dib.width)), static_cast<unsigned int>(std::abs(bmp->dib.height))},
+            {2 * bmp->picture.getSize().x, 2 * bmp->picture.getSize().y},
             "BMP Picture",
             sf::Style::Titlebar | sf::Style::Close);
 
     window.setFramerateLimit(10);
 
     sf::Sprite sp(bmp->picture);
+    sp.setScale(2, 2);
     const sf::Texture *texture_table[] = {&bmp->picture, &bmp->picture_white_black, &bmp->laplace};
     uint32_t texture_i = 0;
     while (window.isOpen()) {
