@@ -196,38 +196,44 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
     }
 
     //cout << "Transform to complex" << endl;
-    int size = image.getSize().x;
 
-    for (int i = 0; i < size; i++)
-        FastFourier1D(complex_image[i], false);
+    for (auto &i : complex_image)
+        FastFourier1D(i, false);
 
     complex_image = rotateVector(complex_image);
 
-    for (int i = 0; i < size; i++)
-        FastFourier1D(complex_image[i], false);
+    for (auto &i : complex_image)
+        FastFourier1D(i, false);
 
     complex_image = rotateVector(complex_image);
 
     //from complex
-    std::vector<float> pixels;
-    pixels.reserve(4 * image.getSize().x * image.getSize().y);
+    double max_complex = 0;
+    std::vector<double> pixel_before;
     for (uint32_t y = 0; y < image.getSize().y; ++y) {
         for (uint32_t x = 0; x < image.getSize().x; ++x) {
-            double dc = std::round(std::abs(complex_image[y][x]));
-            dc /= image.getSize().x;
-            dc /= image.getSize().y;
-            pixels.push_back(dc);
-            pixels.push_back(dc);
-            pixels.push_back(dc);
-            pixels.push_back(255.0);
-
-            int c = dc;
-            image.setPixel(x, y, sf::Color{c, c, c, 255});
+            double dc = std::abs(complex_image[y][x]);
+            //dc = std::log10(dc + 1);
+            if (max_complex < dc) {
+                max_complex = dc;
+            }
+            pixel_before.push_back(dc);
         }
+    }
+    std::vector<float> pixels;
+    pixels.reserve(4 * image.getSize().x * image.getSize().y);
+    for (auto &it : pixel_before) {
+        double dc = (it / max_complex);
+        dc = std::log(999 * dc + 1) / std::log(1000);
+        pixels.push_back(dc);
+        pixels.push_back(dc);
+        pixels.push_back(dc);
+        pixels.push_back(1.0);
     }
 
     sf::Texture t0;
     ///t0.loadFromImage(image);
+    ///GL_RGBA32F and GL_FLOAT no conversion 0-1 color nod clipped 0-**** size possible
     t0.create(image.getSize().x, image.getSize().y);
     {
         sf::Context context;
@@ -246,14 +252,15 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
 
     {
         sf::RenderTexture rt;
-        rt.create(2 * t0.getSize().x, 2 * t0.getSize().y);
+        rt.create(t0.getSize().x, t0.getSize().y);
 
         sf::Sprite s0(t0);
         t0.setRepeated(true);
 
-        s0.setOrigin(t0.getSize().x / 2, t0.getSize().y / 2);
+        s0.setOrigin(t0.getSize().x / 2.0f, t0.getSize().y / 2.0f);
         s0.setTextureRect(sf::IntRect{0, 0,
-                                      s0.getOrigin().x + t0.getSize().x + 1, s0.getOrigin().y + t0.getSize().y + 1});
+                                      static_cast<int>(s0.getOrigin().x + t0.getSize().x + 1),
+                                      static_cast<int>(s0.getOrigin().y + t0.getSize().y + 1)});
 
         rt.draw(s0);
         rt.display();

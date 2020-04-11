@@ -51,8 +51,8 @@ int main() {
     std::cout << bmp->dib;
 
     try {
-        //bmp->picture = PictureLoader::createPicture(bmp);
-        bmp->picture.loadFromFile("square30.jpg");
+        bmp->picture = PictureLoader::createPicture(bmp);
+        //bmp->picture.loadFromFile("square30.jpg");
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
