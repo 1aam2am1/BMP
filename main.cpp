@@ -51,7 +51,8 @@ int main() {
     std::cout << bmp->dib;
 
     try {
-        bmp->picture = PictureLoader::createPicture(bmp);
+        //bmp->picture = PictureLoader::createPicture(bmp);
+        bmp->picture.loadFromFile("square30.jpg");
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
@@ -93,7 +94,7 @@ int main() {
             "BMP Picture",
             sf::Style::Titlebar | sf::Style::Close);
 
-    window.setFramerateLimit(10);
+    window.setFramerateLimit(60);
 
     sf::Sprite sp(bmp->picture);
     sp.setScale(2, 2);
@@ -108,11 +109,12 @@ int main() {
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 texture_i += 1;
                 texture_i %= 3;
-                sp.setTexture(*texture_table[texture_i]);
+                sp.setTexture(*texture_table[texture_i], true);
             }
         }
         window.clear(sf::Color::Black);
 
+        //sp.setPosition(sf::Vector2f{sf::Mouse::getPosition(window)});
         window.draw(sp);
 
         window.display();

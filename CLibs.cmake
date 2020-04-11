@@ -17,6 +17,9 @@ set(CXX_STANDARD "14" CACHE STRING "C++ Standard" FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extlibs/SFML EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME} sfml-graphics)
 
+find_package(OpenGL REQUIRED)
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
+
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/CCopyDLL.cmake)
