@@ -5,23 +5,28 @@
 #include <extlibs/SFML/include/SFML/Graphics.hpp>
 #include <include/PictureTransformer.h>
 
-#define BIG_ENDIAN 0
-#define LITTLE_ENDIAN 1
+#define MY_BIG_ENDIAN 0
+#define MY_LITTLE_ENDIAN 1
 
 int TestByteOrder() {
     short int word = 0x0001;
     char *b = (char *) &word;
-    return (b[0] ? LITTLE_ENDIAN : BIG_ENDIAN);
+    return (b[0] ? MY_LITTLE_ENDIAN : MY_BIG_ENDIAN);
 }
 
 
 int main() {
     {
         int r = TestByteOrder();
-        printf("%s\n", r == LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
-        if (r == BIG_ENDIAN) {
+        printf("%s\n", r == MY_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
+        if (r == MY_BIG_ENDIAN) {
             std::cout << "Wrong system\n";
             std::terminate();
+        }
+    }
+    {
+        if (!sf::Shader::isAvailable()) {
+            std::cout << "Shaders are not available. Fourier transform can work bad and slow." << std::endl;
         }
     }
 
