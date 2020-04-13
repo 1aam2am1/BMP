@@ -15,8 +15,24 @@
 #include "PictureTransformer.h"
 
 PictureTransformer::PictureTransformer() {
-    shader.loadFromFile("resources/black_and_white.frag", sf::Shader::Fragment);
-    shader.setUniform("texture", sf::Shader::CurrentTexture);
+    black_and_white_shader.loadFromFile("resources/black_and_white.frag", sf::Shader::Fragment);
+    black_and_white_shader.setUniform("texture", sf::Shader::CurrentTexture);
+
+    to_complex_shader.loadFromFile("resources/to_complex.frag", sf::Shader::Fragment);
+    to_complex_shader.setUniform("texture", sf::Shader::CurrentTexture);
+
+    f1D_shader.loadFromFile("resources/f1D.frag", sf::Shader::Fragment);
+    f1D_shader.setUniform("texture", sf::Shader::CurrentTexture);
+    f1D_shader.setUniform("forward", false);
+
+    to_watch_shader.loadFromFile("resources/to_watch.frag", sf::Shader::Fragment);
+    to_watch_shader.setUniform("texture", sf::Shader::CurrentTexture);
+
+    to_log_amplitude_shader.loadFromFile("resources/to_log_amplitude.frag", sf::Shader::Fragment);
+    to_log_amplitude_shader.setUniform("texture", sf::Shader::CurrentTexture);
+
+    max_shader.loadFromFile("resources/max.frag", sf::Shader::Fragment);
+    max_shader.setUniform("texture", sf::Shader::CurrentTexture);
 }
 
 
@@ -26,7 +42,7 @@ sf::Texture PictureTransformer::toWhiteBlack(const sf::Texture &picture) {
         t0.create(picture.getSize().x, picture.getSize().y);
 
         sf::Sprite s0(picture);
-        t0.draw(s0, &shader);
+        t0.draw(s0, &black_and_white_shader);
         t0.display();
 
         return t0.getTexture();
@@ -180,6 +196,9 @@ void glCheckError(const char *file, unsigned int line, const char *expression) {
 }
 
 sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
+    if (sf::Shader::isAvailable()) {
+        return shader_fourier(picture);
+    }
     sf::Image image;
     image = picture.copyToImage();
 
@@ -265,5 +284,99 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
         rt.draw(s0);
         rt.display();
         return rt.getTexture();
+    }
+}
+
+sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
+    sf::RenderTexture rt;
+    rt.create(picture.getSize().x, picture.getSize().y);
+    {
+        sf::Context context;
+
+        auto m_actualSize = rt.getTexture().*break_in(actualSize());
+        glCheck(glBindTexture(GL_TEXTURE_2D, rt.getTexture().getNativeHandle()));
+        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_actualSize.x, m_actualSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                             nullptr));
+    }
+    sf::RenderTexture rt2;
+    rt2.create(picture.getSize().x, picture.getSize().y);
+    {
+        sf::Context context;
+
+        auto m_actualSize = rt2.getTexture().*break_in(actualSize());
+        glCheck(glBindTexture(GL_TEXTURE_2D, rt2.getTexture().getNativeHandle()));
+        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_actualSize.x, m_actualSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                             nullptr));
+    }
+    {///to_complex
+        rt.draw(sf::Sprite{picture}, &to_complex_shader);
+        rt.display();
+    }
+    {///1d
+        f1D_shader.setUniform("width", static_cast<float >(rt.getSize().x));
+        f1D_shader.setUniform("horizontal", true);
+        rt2.draw(sf::Sprite{rt.getTexture()}, &f1D_shader);
+        rt2.display();
+    }
+    {///1d
+        f1D_shader.setUniform("horizontal", false);
+        rt.draw(sf::Sprite{rt2.getTexture()}, &f1D_shader);
+        rt.display();
+    }
+    /*f1D_shader.setUniform("forward", true);
+    {///1d
+        f1D_shader.setUniform("horizontal", true);
+        rt2.draw(sf::Sprite{rt.getTexture()}, &f1D_shader);
+        rt2.display();
+    }
+    {///1d
+        f1D_shader.setUniform("horizontal", false);
+        rt.draw(sf::Sprite{rt2.getTexture()}, &f1D_shader);
+        rt.display();
+    }*/
+    {///to_wath from complex
+        sf::Sprite s0(rt.getTexture());
+        rt.setRepeated(true);
+
+        s0.setOrigin(rt.getSize().x / 2.0f, rt.getSize().y / 2.0f);
+        s0.setTextureRect(sf::IntRect{0, 0,
+                                      static_cast<int>(s0.getOrigin().x + rt.getSize().x + 1),
+                                      static_cast<int>(s0.getOrigin().y + rt.getSize().y + 1)});
+
+        rt2.draw(s0, &to_log_amplitude_shader);
+        rt2.display();
+    }
+    {
+        float max_v = max_value(rt2.getTexture());
+        to_watch_shader.setUniform("max_value", max_v);
+
+        sf::Sprite s0(rt2.getTexture());
+        rt.draw(s0, &to_watch_shader);
+        rt.display();
+    }
+
+    return rt.getTexture();
+}
+
+float PictureTransformer::max_value(const sf::Texture &picture) {
+
+    {
+        sf::ContextSettings context;
+        auto m_actualSize = picture.*break_in(actualSize());
+        std::vector<float> allPixels(m_actualSize.x * m_actualSize.y * 4);
+
+        glCheck(glBindTexture(GL_TEXTURE_2D, picture.getNativeHandle()));
+        glCheck(glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, &allPixels[0]));
+        float max = 0;
+        for (int32_t i = 0; i < allPixels.size(); i += 4) {
+            float x = allPixels[i];
+            float y = allPixels[i + 1];
+            float value = x;
+            if (value > max) {
+                max = value;
+            }
+        }
+
+        return max;
     }
 }

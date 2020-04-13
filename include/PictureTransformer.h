@@ -21,9 +21,18 @@ public:
     sf::Texture fourier(const sf::Texture &);
 
 private:
-    sf::Shader shader;
+    sf::Shader black_and_white_shader;
 
+    sf::Texture shader_fourier(const sf::Texture &);
 
+    sf::Shader to_complex_shader;
+    sf::Shader f1D_shader;
+    sf::Shader to_watch_shader;
+    sf::Shader to_log_amplitude_shader;
+
+    float max_value(const sf::Texture &);
+
+    sf::Shader max_shader;
 };
 
 
