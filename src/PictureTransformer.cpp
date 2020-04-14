@@ -259,8 +259,6 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
 
         auto m_actualSize = t0.*break_in(actualSize());
         glCheck(glBindTexture(GL_TEXTURE_2D, t0.getNativeHandle()));
-        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_actualSize.x, m_actualSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                             nullptr));
 
         glCheck(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.getSize().x, image.getSize().y, GL_RGBA, GL_FLOAT,
                                 pixels.data()));
@@ -290,24 +288,10 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
 sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
     sf::RenderTexture rt;
     rt.create(picture.getSize().x, picture.getSize().y);
-    {
-        sf::Context context;
 
-        auto m_actualSize = rt.getTexture().*break_in(actualSize());
-        glCheck(glBindTexture(GL_TEXTURE_2D, rt.getTexture().getNativeHandle()));
-        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_actualSize.x, m_actualSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                             nullptr));
-    }
     sf::RenderTexture rt2;
     rt2.create(picture.getSize().x, picture.getSize().y);
-    {
-        sf::Context context;
 
-        auto m_actualSize = rt2.getTexture().*break_in(actualSize());
-        glCheck(glBindTexture(GL_TEXTURE_2D, rt2.getTexture().getNativeHandle()));
-        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_actualSize.x, m_actualSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                             nullptr));
-    }
     {///to_complex
         rt.draw(sf::Sprite{picture}, &to_complex_shader);
         rt.display();

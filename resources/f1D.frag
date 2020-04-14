@@ -39,7 +39,7 @@ void main()
 
         sum += color;
     }
-    if (!forward){ sum /= width; }
+    if (forward){ sum /= width; }
 
 
     gl_FragColor = vec4(sum.x, sum.y, 0, 1);
