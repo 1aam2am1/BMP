@@ -114,16 +114,17 @@ int main() {
 
 
     sf::RenderWindow window;
+    int scale = 1;
 
     window.create(
-            {2 * bmp->picture.getSize().x, 2 * bmp->picture.getSize().y},
+            {scale * bmp->picture.getSize().x, scale * bmp->picture.getSize().y},
             "BMP Picture",
             sf::Style::Titlebar | sf::Style::Close);
 
     window.setFramerateLimit(60);
 
     sf::Sprite sp(bmp->picture);
-    sp.setScale(2, 2);
+    sp.setScale(scale, scale);
     const sf::Texture *texture_table[] = {&bmp->picture, &bmp->picture_white_black, &bmp->laplace, &bmp->phase};
     uint32_t texture_i = 0;
     while (window.isOpen()) {
