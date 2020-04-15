@@ -16,19 +16,20 @@ public:
     sf::Texture toWhiteBlack(const sf::Texture &);
 
     /* Only red chanel
-     *
+     *  amplitude, phase
      */
-    sf::Texture fourier(const sf::Texture &);
+    std::pair<sf::Texture, sf::Texture> fourier(const sf::Texture &);
 
 private:
     sf::Shader black_and_white_shader;
 
-    sf::Texture shader_fourier(const sf::Texture &);
+    std::pair<sf::Texture, sf::Texture> shader_fourier(const sf::Texture &);
 
     sf::Shader to_complex_shader;
     sf::Shader f1D_shader;
     sf::Shader to_watch_shader;
     sf::Shader to_log_amplitude_shader;
+    sf::Shader to_phase_shader;
 
     float max_value(const sf::Texture &);
 

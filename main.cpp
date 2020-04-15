@@ -101,7 +101,9 @@ int main() {
     try {
         PictureTransformer transformer;
 
-        bmp->laplace = transformer.fourier(bmp->picture_white_black);
+        auto l = transformer.fourier(bmp->picture_white_black);
+        bmp->laplace = l.first;
+        bmp->phase = l.second;
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
@@ -122,7 +124,7 @@ int main() {
 
     sf::Sprite sp(bmp->picture);
     sp.setScale(2, 2);
-    const sf::Texture *texture_table[] = {&bmp->picture, &bmp->picture_white_black, &bmp->laplace};
+    const sf::Texture *texture_table[] = {&bmp->picture, &bmp->picture_white_black, &bmp->laplace, &bmp->phase};
     uint32_t texture_i = 0;
     while (window.isOpen()) {
         sf::Event event{};
@@ -132,7 +134,7 @@ int main() {
             }
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 texture_i += 1;
-                texture_i %= 3;
+                texture_i %= 4;
                 sp.setTexture(*texture_table[texture_i], true);
             }
         }

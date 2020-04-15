@@ -31,6 +31,9 @@ PictureTransformer::PictureTransformer() {
     to_log_amplitude_shader.loadFromFile("resources/to_log_amplitude.frag", sf::Shader::Fragment);
     to_log_amplitude_shader.setUniform("texture", sf::Shader::CurrentTexture);
 
+    to_phase_shader.loadFromFile("resources/to_phase.frag", sf::Shader::Fragment);
+    to_phase_shader.setUniform("texture", sf::Shader::CurrentTexture);
+
     max_shader.loadFromFile("resources/max.frag", sf::Shader::Fragment);
     max_shader.setUniform("texture", sf::Shader::CurrentTexture);
 }
@@ -195,10 +198,11 @@ void glCheckError(const char *file, unsigned int line, const char *expression) {
     }
 }
 
-sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
+std::pair<sf::Texture, sf::Texture> PictureTransformer::fourier(const sf::Texture &picture) {
     if (sf::Shader::isAvailable()) {
         return shader_fourier(picture);
     }
+    std::pair<sf::Texture, sf::Texture> result;
     sf::Image image;
     image = picture.copyToImage();
 
@@ -232,7 +236,7 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
     for (uint32_t y = 0; y < image.getSize().y; ++y) {
         for (uint32_t x = 0; x < image.getSize().x; ++x) {
             double dc = std::abs(complex_image[y][x]);
-            //dc = std::log10(dc + 1);
+            dc = std::log(dc + 1);
             if (max_complex < dc) {
                 max_complex = dc;
             }
@@ -243,7 +247,6 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
     pixels.reserve(4 * image.getSize().x * image.getSize().y);
     for (auto &it : pixel_before) {
         double dc = (it / max_complex);
-        dc = std::log(999 * dc + 1) / std::log(1000);
         pixels.push_back(dc);
         pixels.push_back(dc);
         pixels.push_back(dc);
@@ -257,7 +260,6 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
     {
         sf::Context context;
 
-        auto m_actualSize = t0.*break_in(actualSize());
         glCheck(glBindTexture(GL_TEXTURE_2D, t0.getNativeHandle()));
 
         glCheck(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.getSize().x, image.getSize().y, GL_RGBA, GL_FLOAT,
@@ -281,11 +283,56 @@ sf::Texture PictureTransformer::fourier(const sf::Texture &picture) {
 
         rt.draw(s0);
         rt.display();
-        return rt.getTexture();
+        result.first = rt.getTexture();
     }
+
+    pixels.clear();
+    pixels.reserve(4 * image.getSize().x * image.getSize().y);
+    for (uint32_t y = 0; y < image.getSize().y; ++y) {
+        for (uint32_t x = 0; x < image.getSize().x; ++x) {
+            double dc = complex_image[y][x].imag();
+            dc = dc * 0.5f + 0.5f;
+            pixels.push_back(dc);
+            pixels.push_back(dc);
+            pixels.push_back(dc);
+            pixels.push_back(1.0);
+        }
+    }
+    t0.create(image.getSize().x, image.getSize().y);
+    {
+        sf::Context context;
+
+        glCheck(glBindTexture(GL_TEXTURE_2D, t0.getNativeHandle()));
+
+        glCheck(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.getSize().x, image.getSize().y, GL_RGBA, GL_FLOAT,
+                                pixels.data()));
+        glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+
+        glCheck(glFlush());
+    }
+    {
+        sf::RenderTexture rt;
+        rt.create(t0.getSize().x, t0.getSize().y);
+
+        sf::Sprite s0(t0);
+        t0.setRepeated(true);
+
+        s0.setOrigin(t0.getSize().x / 2.0f, t0.getSize().y / 2.0f);
+        s0.setTextureRect(sf::IntRect{0, 0,
+                                      static_cast<int>(s0.getOrigin().x + t0.getSize().x + 1),
+                                      static_cast<int>(s0.getOrigin().y + t0.getSize().y + 1)});
+
+        rt.draw(s0);
+        rt.display();
+        result.second = rt.getTexture();
+    }
+
+    return result;
 }
 
-sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
+std::pair<sf::Texture, sf::Texture> PictureTransformer::shader_fourier(const sf::Texture &picture) {
+    std::pair<sf::Texture, sf::Texture> result;
+
     sf::RenderTexture rt;
     rt.create(picture.getSize().x, picture.getSize().y);
 
@@ -322,6 +369,7 @@ sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
         rt.display();
         return rt.getTexture();
     }*/
+    result.second = rt.getTexture();
     {///to_wath from complex
         sf::Sprite s0(rt.getTexture());
         rt.setRepeated(true);
@@ -343,7 +391,23 @@ sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
         rt.display();
     }
 
-    return rt.getTexture();
+    result.first = rt.getTexture();
+
+    {
+        sf::Sprite s0(result.second);
+        result.second.setRepeated(true);
+        s0.setOrigin(rt.getSize().x / 2.0f, rt.getSize().y / 2.0f);
+        s0.setTextureRect(sf::IntRect{0, 0,
+                                      static_cast<int>(s0.getOrigin().x + rt.getSize().x + 1),
+                                      static_cast<int>(s0.getOrigin().y + rt.getSize().y + 1)});
+
+        rt.draw(s0, &to_phase_shader);
+        rt.display();
+
+        result.second = rt.getTexture();
+    }
+
+    return result;
 }
 
 float PictureTransformer::max_value(const sf::Texture &picture) {

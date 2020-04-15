@@ -45,6 +45,7 @@ struct BMP {
     sf::Texture picture;
     sf::Texture picture_white_black;
     sf::Texture laplace;
+    sf::Texture phase;
 };
 
 std::ostream &operator<<(std::ostream &, const BMP::PALETTE &);
