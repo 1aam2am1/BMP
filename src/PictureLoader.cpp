@@ -13,7 +13,7 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
     std::shared_ptr<FILE> file = {f, fclose};
     auto result = std::make_shared<BMP>();
 
-    if (!file) { return {}; }
+    if (!file) { throw std::runtime_error("Wrong file name"); }
     /**Header info*/
     BMP_HEADER header = BMP_HEADER::load(f);
     result->header = header;
