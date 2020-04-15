@@ -33,7 +33,11 @@ int main() {
     std::shared_ptr<BMP> bmp;
 
     try {
-        bmp = PictureLoader::load("b.bmp");
+        std::cout << "File name: " << std::endl;
+        std::string name;
+        getline(std::cin, name);
+
+        bmp = PictureLoader::load(name);
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
@@ -57,7 +61,17 @@ int main() {
 
     try {
         bmp->picture = PictureLoader::createPicture(bmp);
-        //bmp->picture.loadFromFile("square30.jpg");
+    } catch (const std::exception &e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+        std::terminate();
+    } catch (...) {
+        std::cout << "Exception with no data" << std::endl;
+        std::terminate();
+    }
+
+    try {
+        std::string name = "out.bmp";
+        PictureLoader::savePicture(bmp->picture, name);
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();

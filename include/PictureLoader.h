@@ -15,6 +15,8 @@ public:
 
     static sf::Texture createPicture(const std::shared_ptr<const BMP> &);
 
+    static void savePicture(const sf::Texture &, const std::string &);
+
 private:
     static sf::Texture ReadRgb32Slow(std::shared_ptr<const BMP>);
 

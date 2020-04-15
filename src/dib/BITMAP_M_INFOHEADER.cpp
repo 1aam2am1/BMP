@@ -42,3 +42,35 @@ DIBHEADER BITMAP_M_INFOHEADER::load(FILE *f) {
     return header;
 }
 
+void BITMAP_M_INFOHEADER::save(FILE *f, const DIBHEADER &header) {
+    BITMAP_M_INFOHEADER device{};
+
+    WRITE_FILE(dibSize);
+    WRITE_FILE(width);
+    WRITE_FILE(height);
+    WRITE_FILE(planesNumber);
+    WRITE_FILE(bitsPerPixel);
+    WRITE_FILE(compressionType);
+    WRITE_FILE(rawImageSize);
+    WRITE_FILE(XPixelsPerM);
+    WRITE_FILE(YPixelsPerM);
+    WRITE_FILE(paletteColorsNumber);
+    WRITE_FILE(importantColors);
+
+    switch (header.compressionType) {
+        case BmpCompression::BI_BITFIELDS:
+            WRITE_FILE_SIZE(RedMask, 4);
+            WRITE_FILE_SIZE(GreenMask, 4);
+            WRITE_FILE_SIZE(BlueMask, 4);
+            break;
+        case BmpCompression::BI_ALPHABITFIELDS:
+            WRITE_FILE_SIZE(RedMask, 4);
+            WRITE_FILE_SIZE(GreenMask, 4);
+            WRITE_FILE_SIZE(BlueMask, 4);
+            WRITE_FILE_SIZE(AlphaMask, 4);
+            break;
+        default:
+            break;
+    }
+}
+

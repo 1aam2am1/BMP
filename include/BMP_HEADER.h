@@ -19,6 +19,8 @@ struct BMP_HEADER {
     uint32_t file_offset;
 
     static BMP_HEADER load(FILE *);
+
+    static void save(FILE *, const BMP_HEADER &);
 };
 
 ///_Os2BmpArrayHeader

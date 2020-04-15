@@ -19,6 +19,17 @@ BMP_HEADER BMP_HEADER::load(FILE *f) {
     return header;
 }
 
+void BMP_HEADER::save(FILE *f, const BMP_HEADER &header) {
+    BMP_HEADER device{};
+
+    WRITE_FILE(signature[0]);
+    WRITE_FILE(signature[1]);
+    WRITE_FILE(file_size);
+    WRITE_FILE(reserved1);
+    WRITE_FILE(reserved2);
+    WRITE_FILE(file_offset);
+}
+
 std::ostream &operator<<(std::ostream &l, const BMP_HEADER &header) {
     l << header.signature[0] << header.signature[1] << std::endl;
     l << "file_size: " << header.file_size << std::endl;

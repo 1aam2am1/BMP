@@ -25,6 +25,8 @@ struct BITMAP_M_INFOHEADER {
     uint32_t importantColors;
 
     static DIBHEADER load(FILE *);
+
+    static void save(FILE *, const DIBHEADER &);
 };
 
 #pragma pack(pop)

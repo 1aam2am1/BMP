@@ -6,6 +6,7 @@
 #include "BMP_HEADER.h"
 #include <cstdio>
 #include <memory>
+#include <include/DEFINES.h>
 
 std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
     FILE *f = fopen(name.c_str(), "rb");
@@ -741,5 +742,63 @@ std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_pt
     }
 
     return result;
+}
+
+void PictureLoader::savePicture(const sf::Texture &picture, const std::string &name) {
+    sf::Image image = picture.copyToImage();
+
+    FILE *f = fopen(name.c_str(), "wb");
+    std::shared_ptr<FILE> file = {f, fclose};
+
+    if (!file) { throw std::runtime_error("Can't save file"); }
+
+    uint32_t sizeOfRow = ((32 * image.getSize().x + 31) / 32) * 4;
+    uint32_t sizeOfRawImage = sizeOfRow * image.getSize().y;
+
+    BMP_HEADER bmpHeader;
+    bmpHeader.signature[0] = 'B';
+    bmpHeader.signature[1] = 'M';
+    bmpHeader.file_size = sizeof(BMP_HEADER) + sizeof(BITMAP_M_INFOHEADER) + sizeOfRawImage;
+    bmpHeader.reserved1 = 0;
+    bmpHeader.reserved2 = 0;
+    bmpHeader.file_offset = sizeof(BMP_HEADER) + sizeof(BITMAP_M_INFOHEADER);
+    ///BITMAP_M_V3INFOHEADER becouse BITMAP_M_INFOHEADER + RGBA mask
+
+    DIBHEADER dibheader;
+    dibheader.dibSize = sizeof(BITMAP_M_INFOHEADER);
+    dibheader.width = image.getSize().x;
+    dibheader.height = -image.getSize().y;
+    dibheader.planesNumber = 1;
+    dibheader.bitsPerPixel = 32;
+    dibheader.compressionType = BmpCompression::BI_RGB;
+    dibheader.rawImageSize = sizeOfRawImage;
+    dibheader.XPixelsPerM = 1000;
+    dibheader.YPixelsPerM = 1000;
+    dibheader.paletteColorsNumber = 0;
+    dibheader.importantColors = 0;
+
+    dibheader.RedMask = 0xFF00'0000;
+    dibheader.GreenMask = 0xFF'0000;
+    dibheader.BlueMask = 0xFF00;
+    dibheader.AlphaMask = 0xFF;
+
+    BMP_HEADER::save(f, bmpHeader);
+    BITMAP_M_INFOHEADER::save(f, dibheader);
+
+    for (uint32_t y = 0; y < image.getSize().y; ++y) {
+        for (uint32_t x = 0; x < image.getSize().x; ++x) {
+            auto color = image.getPixel(x, y);
+            WRITE_FILE_SIZE_RAW(&color.b, 1);
+            WRITE_FILE_SIZE_RAW(&color.g, 1);
+            WRITE_FILE_SIZE_RAW(&color.r, 1);
+            WRITE_FILE_SIZE_RAW(&color.a, 1);
+        }
+        /**To 4baits*/
+        uint32_t padding = (image.getSize().x * 4) % 4;
+        if (padding != 0) {
+            uint32_t p = 0;
+            WRITE_FILE_SIZE_RAW(&p, (4 - padding));
+        }
+    }
 }
 

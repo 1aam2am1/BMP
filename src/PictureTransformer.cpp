@@ -333,7 +333,7 @@ sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
     {
         float max_v = max_value(rt2.getTexture());
         to_watch_shader.setUniform("max_value", max_v);
-        std::cout << "max_v: " << max_v << std::endl;
+
         sf::Sprite s0(rt2.getTexture());
         rt.draw(s0, &to_watch_shader);
         rt.display();
