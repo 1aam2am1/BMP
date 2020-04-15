@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <SFML/Graphics/Color.hpp>
+#include <iomanip>
 
 #pragma pack(push, 1)
 
@@ -32,10 +33,11 @@ struct Color {
 static_assert(sizeof(Color) == 4, "Wrong alignment of data");
 
 inline std::ostream &operator<<(std::ostream &l, const Color &c) {
-    l << static_cast<uint32_t>(c.red) << " "
-      << static_cast<uint32_t>(c.green) << " "
-      << static_cast<uint32_t>(c.blue) << " "
-      << static_cast<uint32_t>(c.alpha);
+    l.fill(' ');
+    l << std::setw(3) << static_cast<uint32_t>(c.red) << " "
+      << std::setw(3) << static_cast<uint32_t>(c.green) << " "
+      << std::setw(3) << static_cast<uint32_t>(c.blue) << " "
+      << std::setw(3) << static_cast<uint32_t>(c.alpha);
     return l;
 }
 
