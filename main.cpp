@@ -59,6 +59,11 @@ int main() {
      */
     std::cout << bmp->dib;
 
+    /*
+     * Display palette
+     */
+    std::cout << bmp->palette;
+
     try {
         bmp->picture = PictureLoader::createPicture(bmp);
     } catch (const std::exception &e) {

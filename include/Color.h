@@ -31,4 +31,12 @@ struct Color {
 
 static_assert(sizeof(Color) == 4, "Wrong alignment of data");
 
+inline std::ostream &operator<<(std::ostream &l, const Color &c) {
+    l << static_cast<uint32_t>(c.red) << " "
+      << static_cast<uint32_t>(c.green) << " "
+      << static_cast<uint32_t>(c.blue) << " "
+      << static_cast<uint32_t>(c.alpha);
+    return l;
+}
+
 #endif //BMP_COLOR_H

@@ -47,4 +47,6 @@ struct BMP {
     sf::Texture laplace;
 };
 
+std::ostream &operator<<(std::ostream &, const BMP::PALETTE &);
+
 #endif //BMP_BMP_H
