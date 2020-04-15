@@ -303,20 +303,24 @@ sf::Texture PictureTransformer::shader_fourier(const sf::Texture &picture) {
         rt2.display();
     }
     {///1d
+        f1D_shader.setUniform("width", static_cast<float >(rt.getSize().y));
         f1D_shader.setUniform("horizontal", false);
         rt.draw(sf::Sprite{rt2.getTexture()}, &f1D_shader);
         rt.display();
     }
     /*f1D_shader.setUniform("forward", true);
     {///1d
+        f1D_shader.setUniform("width", static_cast<float >(rt.getSize().x));
         f1D_shader.setUniform("horizontal", true);
         rt2.draw(sf::Sprite{rt.getTexture()}, &f1D_shader);
         rt2.display();
     }
     {///1d
+        f1D_shader.setUniform("width", static_cast<float >(rt.getSize().y));
         f1D_shader.setUniform("horizontal", false);
         rt.draw(sf::Sprite{rt2.getTexture()}, &f1D_shader);
         rt.display();
+        return rt.getTexture();
     }*/
     {///to_wath from complex
         sf::Sprite s0(rt.getTexture());
