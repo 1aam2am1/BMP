@@ -1,0 +1,9 @@
+file(GLOB_RECURSE GENERATED_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE GENERATED_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
+
+add_library(WinNTL STATIC ${GENERATED_SOURCES} ${GENERATED_HEADERS})
+
+target_include_directories(WinNTL PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+target_link_libraries(${PROJECT_NAME} WinNTL)

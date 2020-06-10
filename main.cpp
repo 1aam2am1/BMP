@@ -4,6 +4,13 @@
 #include <map>
 #include <extlibs/SFML/include/SFML/Graphics.hpp>
 #include <include/PictureTransformer.h>
+#include <CkPrivateKey.h>
+#include <CkXml.h>
+#include <CkBinData.h>
+#include <CkCert.h>
+#include <CkPublicKey.h>
+#include <include/Encryption.h>
+
 
 #define MY_BIG_ENDIAN 0
 #define MY_LITTLE_ENDIAN 1
@@ -32,12 +39,51 @@ int main() {
 
     std::shared_ptr<BMP> bmp;
 
+    {
+        bool success = Encryption::key.LoadPem("ssh/id_rsa");
+        if (!success) {
+            std::cout << Encryption::key.lastErrorText() << "\r\n";
+            std::terminate();
+        }
+
+        std::cout << "Private Key XML:" << "\n";
+        std::cout << Encryption::key.getXml() << "\n";
+        std::cout << "Length: " << Encryption::key.get_BitLength() << "\n";
+    }
+
+    std::cout << "Rsa: {0-none, 1-decryption, 2-cbc(dec)" << std::endl;
+    int encryptionChoice;
+    {
+        std::cin >> encryptionChoice;
+        switch (encryptionChoice) {
+            case 0:
+            case 1:
+            case 2:
+                break;
+            default:
+                std::terminate();
+        }
+    }
+
     try {
+        std::cin.ignore();
         std::cout << "File name: " << std::endl;
         std::string name;
         getline(std::cin, name);
 
-        bmp = PictureLoader::load(name);
+        switch (encryptionChoice) {
+            case 0:
+                bmp = PictureLoader::load(name, 0);
+                break;
+            case 1:
+                bmp = PictureLoader::load(name, 1);
+                break;
+            case 2:
+                bmp = PictureLoader::load(name, 2);
+                break;
+            default:
+                break;
+        };
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();
@@ -75,8 +121,9 @@ int main() {
     }
 
     try {
-        std::string name = "out.bmp";
-        PictureLoader::savePicture(bmp->picture, name);
+        PictureLoader::savePicture(bmp->picture, "out.bmp", 0);
+        PictureLoader::savePicture(bmp->picture, "en_out.bmp", 1);
+        //PictureLoader::savePicture(bmp->picture, "encbc_out.bmp", 2);
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();

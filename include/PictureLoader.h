@@ -11,11 +11,19 @@
 
 class PictureLoader {
 public:
-    static std::shared_ptr<BMP> load(const std::string &name);
+    ///
+    /// \param name Name of file
+    /// \param decrypt 0-none, 1-rsa, 2-cbc
+    /// \return
+    static std::shared_ptr<BMP> load(const std::string &name, int decrypt = 0);
 
     static sf::Texture createPicture(const std::shared_ptr<const BMP> &);
 
-    static void savePicture(const sf::Texture &, const std::string &);
+    ///
+    /// \param t Texture
+    /// \param name Name of file
+    /// \param encrypt 0-none, 1-rsa, 2-cbc
+    static void savePicture(const sf::Texture &t, const std::string &name, int encrypt = 0);
 
 private:
     static sf::Texture ReadRgb32Slow(std::shared_ptr<const BMP>);

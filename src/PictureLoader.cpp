@@ -7,8 +7,9 @@
 #include <cstdio>
 #include <memory>
 #include <include/DEFINES.h>
+#include <include/Encryption.h>
 
-std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
+std::shared_ptr<BMP> PictureLoader::load(const std::string &name, int decrypt) {
     FILE *f = fopen(name.c_str(), "rb");
     std::shared_ptr<FILE> file = {f, fclose};
     auto result = std::make_shared<BMP>();
@@ -162,8 +163,40 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name) {
                 break;
         }
 
-        result->rawPixel.resize(sizeOfRawImage);
-        fread(result->rawPixel.data(), 1, sizeOfRawImage, f);
+        {
+            switch (decrypt) {
+                case 0: {
+                    result->rawPixel.resize(sizeOfRawImage);
+                    fread(result->rawPixel.data(), 1, sizeOfRawImage, f);
+                    break;
+                }
+                case 1: {
+                    uint32_t keySize = Encryption::key.get_BitLength() / 8;
+                    //resize up
+                    uint32_t sizeEn = keySize * ((sizeOfRawImage + keySize - 1) / keySize);
+
+                    result->rawPixel.resize(sizeEn);
+                    fread(result->rawPixel.data(), 1, sizeEn, f);
+
+                    result->rawPixel = Encryption::decrypt(result->rawPixel);
+
+                    for (uint32_t i = sizeOfRawImage; i < result->rawPixel.size(); ++i) {
+                        if (result->rawPixel[i] != 0) {
+                            throw std::runtime_error("There should be zero from decrypt");
+                        }
+                    }
+
+                    result->rawPixel.resize(sizeOfRawImage);
+                    result->rawPixel.shrink_to_fit();
+
+                    break;
+                }
+                case 2:
+                    throw std::runtime_error("Decryption not implemented");
+                default:
+                    throw std::runtime_error("Wrong decryption");
+            };
+        }
     }
 
 
@@ -744,7 +777,7 @@ std::vector<uint32_t> PictureLoader::getUncompressedPixel32(const std::shared_pt
     return result;
 }
 
-void PictureLoader::savePicture(const sf::Texture &picture, const std::string &name) {
+void PictureLoader::savePicture(const sf::Texture &picture, const std::string &name, int encrypt) {
     sf::Image image = picture.copyToImage();
 
     FILE *f = fopen(name.c_str(), "wb");
@@ -755,10 +788,55 @@ void PictureLoader::savePicture(const sf::Texture &picture, const std::string &n
     uint32_t sizeOfRow = ((32 * image.getSize().x + 31) / 32) * 4;
     uint32_t sizeOfRawImage = sizeOfRow * image.getSize().y;
 
+    std::vector<uint8_t> pixelSaved;
+    {
+        for (uint32_t y = 0; y < image.getSize().y; ++y) {
+            for (uint32_t x = 0; x < image.getSize().x; ++x) {
+                auto color = image.getPixel(x, y);
+                pixelSaved.push_back(color.b);
+                pixelSaved.push_back(color.g);
+                pixelSaved.push_back(color.r);
+                pixelSaved.push_back(color.a);
+            }
+            /**To 4baits*/
+            uint32_t padding = (image.getSize().x * 4) % 4;
+            if (padding != 0) {
+                pixelSaved.insert(pixelSaved.end(), (4 - padding), 0);
+            }
+        }
+    }
+
+    if (pixelSaved.size() != sizeOfRawImage) {
+        throw std::runtime_error("Wrong sizeOfRawImage in saving");
+    }
+
+    {
+        switch (encrypt) {
+            case 0:
+                break;
+            case 1: {
+                uint32_t keySize = Encryption::key.get_BitLength() / 8;
+                //resize up
+                uint32_t com = keySize * ((sizeOfRawImage + keySize - 1) / keySize);
+
+                pixelSaved.insert(pixelSaved.end(), com - pixelSaved.size(), 0);
+
+                pixelSaved = Encryption::encrypt(pixelSaved);
+                //pixelSaved = Encryption::decrypt(pixelSaved);
+                //pixelSaved.resize(sizeOfRawImage);
+            }
+                break;
+            case 2:
+                throw std::runtime_error("Decryption not implemented");
+            default:
+                throw std::runtime_error("Wrong decryption");
+        };
+    }
+
     BMP_HEADER bmpHeader;
     bmpHeader.signature[0] = 'B';
     bmpHeader.signature[1] = 'M';
-    bmpHeader.file_size = sizeof(BMP_HEADER) + sizeof(BITMAP_M_INFOHEADER) + sizeOfRawImage;
+    bmpHeader.file_size = sizeof(BMP_HEADER) + sizeof(BITMAP_M_INFOHEADER) + pixelSaved.size();
     bmpHeader.reserved1 = 0;
     bmpHeader.reserved2 = 0;
     bmpHeader.file_offset = sizeof(BMP_HEADER) + sizeof(BITMAP_M_INFOHEADER);
@@ -785,20 +863,6 @@ void PictureLoader::savePicture(const sf::Texture &picture, const std::string &n
     BMP_HEADER::save(f, bmpHeader);
     BITMAP_M_INFOHEADER::save(f, dibheader);
 
-    for (uint32_t y = 0; y < image.getSize().y; ++y) {
-        for (uint32_t x = 0; x < image.getSize().x; ++x) {
-            auto color = image.getPixel(x, y);
-            WRITE_FILE_SIZE_RAW(&color.b, 1);
-            WRITE_FILE_SIZE_RAW(&color.g, 1);
-            WRITE_FILE_SIZE_RAW(&color.r, 1);
-            WRITE_FILE_SIZE_RAW(&color.a, 1);
-        }
-        /**To 4baits*/
-        uint32_t padding = (image.getSize().x * 4) % 4;
-        if (padding != 0) {
-            uint32_t p = 0;
-            WRITE_FILE_SIZE_RAW(&p, (4 - padding));
-        }
-    }
+    fwrite(pixelSaved.data(), 1, pixelSaved.size(), f);
 }
 

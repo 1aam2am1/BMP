@@ -9,6 +9,8 @@ set_target_properties(BMP PROPERTIES
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfatal-errors -mno-ms-bitfields -Wno-invalid-offsetof")
 
 include(CLibs.cmake)
+include(chilkat-9.5.0-i686-8.1.0-posix-dwarf-rt_v6-rev0/CMakeLists.txt)
+add_subdirectory(WinNTL-11_4_3)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
