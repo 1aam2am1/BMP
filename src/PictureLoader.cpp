@@ -171,9 +171,7 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name, int decrypt) {
                     break;
                 }
                 case 1: {
-                    uint32_t keySize = Encryption::key.get_BitLength() / 8;
-                    //resize up
-                    uint32_t sizeEn = keySize * ((sizeOfRawImage + keySize - 1) / keySize);
+                    uint32_t sizeEn = Encryption::getDecryptSize(sizeOfRawImage);
 
                     result->rawPixel.resize(sizeEn);
                     fread(result->rawPixel.data(), 1, sizeEn, f);
@@ -814,17 +812,8 @@ void PictureLoader::savePicture(const sf::Texture &picture, const std::string &n
         switch (encrypt) {
             case 0:
                 break;
-            case 1: {
-                uint32_t keySize = Encryption::key.get_BitLength() / 8;
-                //resize up
-                uint32_t com = keySize * ((sizeOfRawImage + keySize - 1) / keySize);
-
-                pixelSaved.insert(pixelSaved.end(), com - pixelSaved.size(), 0);
-
+            case 1:
                 pixelSaved = Encryption::encrypt(pixelSaved);
-                //pixelSaved = Encryption::decrypt(pixelSaved);
-                //pixelSaved.resize(sizeOfRawImage);
-            }
                 break;
             case 2:
                 throw std::runtime_error("Decryption not implemented");

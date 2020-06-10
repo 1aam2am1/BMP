@@ -26,8 +26,10 @@ NTL::ZZ getChunk(std::list<uint8_t> &data, uint32_t size) {
     while (size--) {
         uint8_t l = 0;
 
-        l = data.front();
-        data.pop_front();
+        if (!data.empty()) {
+            l = data.front();
+            data.pop_front();
+        }
 
         result *= 256;
         result += l;
@@ -54,20 +56,20 @@ void saveChunk(std::vector<uint8_t> &s, NTL::ZZ z, uint32_t size) {
     std::reverse_copy(r.begin(), r.end(), std::back_inserter(s));
 }
 
-std::vector<uint8_t> make(std::vector<uint8_t> t, const NTL::ZZ &e, const NTL::ZZ &m, uint32_t keySize) {
+std::vector<uint8_t> make(std::vector<uint8_t> t, const NTL::ZZ &e, const NTL::ZZ &m, uint32_t read, uint32_t write) {
     std::vector<uint8_t> result;
 
     std::list<uint8_t> v;
     v.insert(v.begin(), t.begin(), t.end());
 
     while (!v.empty()) {
-        auto ch = getChunk(v, keySize);
+        auto ch = getChunk(v, read);
 
         NTL::ZZ z;
 
         z = NTL::PowerMod(ch % m, e, m);
 
-        saveChunk(result, z, keySize);
+        saveChunk(result, z, write);
     }
 
 
@@ -79,7 +81,7 @@ std::vector<uint8_t> Encryption::encrypt(std::vector<uint8_t> t) {
     const NTL::ZZ m = number(key, "Modulus");
     uint32_t keySize = key.get_BitLength() / 8;
 
-    return make(std::move(t), e, m, keySize);
+    return make(std::move(t), e, m, keySize - 1, keySize);
 }
 
 std::vector<uint8_t> Encryption::decrypt(std::vector<uint8_t> t) {
@@ -87,5 +89,15 @@ std::vector<uint8_t> Encryption::decrypt(std::vector<uint8_t> t) {
     const NTL::ZZ m = number(key, "Modulus");
     uint32_t keySize = key.get_BitLength() / 8;
 
-    return make(std::move(t), d, m, keySize);
+    return make(std::move(t), d, m, keySize, keySize - 1);
+}
+
+uint32_t Encryption::getDecryptSize(uint32_t sizeOfRawImage) {
+    uint32_t keySize = key.get_BitLength() / 8;
+
+    uint32_t readMessagesSize = keySize - 1;
+
+    uint32_t sizeEn = keySize * ((sizeOfRawImage + readMessagesSize - 1) / readMessagesSize);
+
+    return sizeEn;
 }
