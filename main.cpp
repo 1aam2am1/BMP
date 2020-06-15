@@ -123,7 +123,7 @@ int main() {
     try {
         PictureLoader::savePicture(bmp->picture, "out.bmp", 0);
         PictureLoader::savePicture(bmp->picture, "en_out.bmp", 1);
-        //PictureLoader::savePicture(bmp->picture, "encbc_out.bmp", 2);
+        PictureLoader::savePicture(bmp->picture, "encbc_out.bmp", 2);
     } catch (const std::exception &e) {
         std::cout << "Exception: " << e.what() << std::endl;
         std::terminate();

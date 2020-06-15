@@ -189,8 +189,25 @@ std::shared_ptr<BMP> PictureLoader::load(const std::string &name, int decrypt) {
 
                     break;
                 }
-                case 2:
-                    throw std::runtime_error("Decryption not implemented");
+                case 2: {
+                    uint32_t sizeEn = Encryption::getDecryptSize(sizeOfRawImage);
+
+                    result->rawPixel.resize(sizeEn);
+                    fread(result->rawPixel.data(), 1, sizeEn, f);
+
+                    result->rawPixel = Encryption::CBCdecrypt(result->rawPixel);
+
+                    for (uint32_t i = sizeOfRawImage; i < result->rawPixel.size(); ++i) {
+                        if (result->rawPixel[i] != 0) {
+                            throw std::runtime_error("There should be zero from decrypt");
+                        }
+                    }
+
+                    result->rawPixel.resize(sizeOfRawImage);
+                    result->rawPixel.shrink_to_fit();
+
+                    break;
+                }
                 default:
                     throw std::runtime_error("Wrong decryption");
             };
@@ -816,7 +833,8 @@ void PictureLoader::savePicture(const sf::Texture &picture, const std::string &n
                 pixelSaved = Encryption::encrypt(pixelSaved);
                 break;
             case 2:
-                throw std::runtime_error("Decryption not implemented");
+                pixelSaved = Encryption::CBCencrypt(pixelSaved);
+                break;
             default:
                 throw std::runtime_error("Wrong decryption");
         };

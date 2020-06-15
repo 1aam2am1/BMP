@@ -19,6 +19,10 @@ public:
 
     static std::vector<uint8_t> decrypt(std::vector<uint8_t>);
 
+    static std::vector<uint8_t> CBCencrypt(std::vector<uint8_t>);
+
+    static std::vector<uint8_t> CBCdecrypt(std::vector<uint8_t>);
+
     static uint32_t getDecryptSize(uint32_t);
 
     static CkPrivateKey key;
